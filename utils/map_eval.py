@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from .compute_overlap import compute_overlap
+from utils.compute_overlap import compute_overlap
 import numpy as np
 from tqdm import tqdm
 import time
@@ -41,7 +41,10 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
     """ Get the detections from the model using the generator.
 
     The result is a list of lists such that the size is:
-        all_detections[num_images][num_classes] = detections[num_detections, 4 + scores]
+        all_detections.shape = N*C*5
+        N: number of images
+        C: number of classes
+        5: boxes + scores
 
     # Arguments
         generator       : The generator used to run images through the model.
@@ -81,7 +84,7 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
         # argsort 是从小到大排序 
         scores_sort = np.argsort(-scores)[:max_detections]
 
-        # 选取对应索引且重新排序的输出 （对得到的索引排序就可以了）
+        # 选取对应索引且重新排序的输出 （对得到的索引排序就可以了）image_boxes是二维的
         image_boxes      = boxes[0, indices[scores_sort], :]
         image_scores     = scores[scores_sort]
         image_labels     = labels[0, indices[scores_sort]]
@@ -100,5 +103,127 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
             all_detections[i][label] = image_detections[image_detections[:, -1] == label, :-1]
 
         all_inferences_time[i] = inference_time
+        pbar.update(1)
     
     return all_detections, all_inferences_time
+
+def _get_annotations(generator):
+    """ Get the ground truth annotations from the generator.
+
+    The result is a list of lists such that the size is:
+        all_detections.shape = N*C*4
+        N: number of images
+        C: number of classes
+        4: boxes
+
+    # Arguments
+        generator : The generator used to retrieve ground truth annotations.
+    # Returns
+        A list of lists containing the annotations for each image in the generator.
+    """
+    all_annotations = [[None for i in range(generator.num_classes())] for j in range(generator.size())]
+
+    pbar = tqdm(total = generator.size())
+    for i in range(generator.size()):
+        # load the annotations
+        annotations = generator.load_annotations(i)
+
+        # copy detections to all_annotations
+        for label in range(generator.num_classes()):
+            if not generator.has_label(label):
+                continue
+
+            all_annotations[i][label] = annotations['bboxes'][annotations['labels'] == label, :].copy()
+        pbar.update(1)
+    return all_annotations
+
+def evalution(
+    generator,
+    model,
+    iou_threshold=0.5,
+    score_threshold=0.05,
+    max_detections=100,
+    save_path=None
+):
+    """ Evaluate a given dataset using a given model.
+
+    # Arguments
+        generator       : The generator that represents the dataset to evaluate.
+        model           : The model to evaluate.
+        iou_threshold   : The threshold used to consider when a detection is positive or negative.
+        score_threshold : The score confidence threshold to use for detections.
+        max_detections  : The maximum number of detections to use per image.
+        save_path       : The path to save images with visualized detections to.
+    # Returns
+        A dict mapping class names to mAP scores.
+    """
+    all_detections, all_inferences_time = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+    all_annotations = _get_annotations(generator)
+    average_precisions = {}
+
+    for label in range(generator.num_classes()):
+        if not generator.has(label):
+            continue
+        false_positives = np.zeros((0,))
+        true_positives  = np.zeros((0,))
+        scores          = np.zeros((0,))
+        num_annotations = 0.0
+        num_detections = 0.0
+
+        for i in range(generator.size()):
+            detections = all_detections[i][label]
+            annotations = all_annotations[i][label]
+            # number of boxes * 4
+            num_annotations += annotations.shape[0]
+            num_detections  += detections.shape[0]
+            detected_annotations = []
+
+            for d in detections:
+                scores = np.append(scores, d[4])
+
+                if annotations.shape[0] == 0:
+                    np.append(false_positives, 1)
+                    np.append(true_positives, 0)
+                    continue
+
+                overlaps = compute_overlap(np.expand_dims(d[:-1], axis=0), annotations)
+                assigned_labels = np.argmax(overlaps, axis=1)[0]
+                max_overlap = overlaps[0, assigned_labels]
+
+                # 如果多个检测框对应某一个GT的IoU都大于阈值？ detections本来就是排过序的
+                if max_overlap > iou_threshold and assigned_labels not in detected_annotations:
+                    false_positives = np.append(false_positives, 0)
+                    true_positives = np.append(true_positives, 1)
+                    detected_annotations.append(assigned_labels)
+                else:
+                    false_positives = np.append(false_positives, 1)
+                    true_positives  = np.append(true_positives, 0)
+
+        if num_annotations == 0:
+            if num_detections == 0:
+                average_precisions[label] = 1, 0
+                continue
+            else:
+                average_precisions[label] = 0, 0
+                continue
+
+        indices = np.argsort(-scores)
+        false_positives = false_positives[indices]
+        true_positives = true_positives[indices]
+
+        # np.cumsum([0,1,0,1,1])
+        # array([0, 1, 1, 2, 3])
+        false_positives = np.cumsum(false_positives)
+        true_positives  = np.cumsum(true_positives)
+        
+        # recall = TP / number of gt
+        # prescision = TP / 
+        recall = true_positives / num_annotations
+        prescision = true_positives / np.maximum(true_positives + false_positives, np.finfo(np.float64).eps)
+
+        average_precision = _compute_ap(recall, prescision)
+        average_precisions[label] = average_precision, num_annotations
+    
+    inference_time_mean = np.sum(all_inferences_time) / generator.size()
+    return average_precisions, inference_time_mean
+    
