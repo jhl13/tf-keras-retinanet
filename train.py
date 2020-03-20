@@ -5,6 +5,9 @@ from data.voc_generator import PascalVocGenerator
 import tensorflow as tf
 import cv2
 from model import resnet
+from model.retinanet import default_submodels
+from model import fpn
+from model import loss
 
 def check_args(args):
     assert args.data_dir is not None, "No input argument: --data_dir."
@@ -25,15 +28,19 @@ def main(args = None):
     print ("User:{}, Set_type:{}".format(args.user, args.set_type))
 
     generator = PascalVocGenerator(args.data_dir, "train")
-    print (generator.num_classes())
-    print (generator.size())
+    
+    model = resnet.resnet_retinanet(num_classes=20)
 
-    # resnet50 = tf.keras.applications.ResNet50V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=10)
-    # for layer in resnet50.layers:
-    #     print (layer.name)
-    model = resnet.resnet50(10)
+    model.compile(
+        loss={
+            'regression'    : loss.smooth_l1(),
+            'classification': loss.focal()
+        },
+        optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
+    )
+
     print (model.summary())
-    print (model.output)
+    model.fit(x=generator, steps_per_epoch=100, epochs=1)
 
 if __name__ == "__main__":
     main()

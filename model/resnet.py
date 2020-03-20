@@ -30,12 +30,16 @@ from __future__ import print_function
 import os
 import warnings
 
+import tensorflow as tf
 from tensorflow.keras import backend
 from tensorflow.keras import layers
 from tensorflow.keras import models
 from tensorflow.keras import regularizers
 from tensorflow.keras import utils
 
+from model import Backbone
+from utils.image import preprocess_image
+from model import retinanet
 
 L2_WEIGHT_DECAY = 1e-4
 BATCH_NORM_DECAY = 0.9
@@ -184,7 +188,7 @@ def conv_block(input_tensor,
   return x
 
 
-def resnet50(num_classes):
+def resnet50():
   # TODO(tfboyd): add training argument, just lik resnet56.
   """Instantiates the ResNet50 architecture.
 
@@ -244,11 +248,74 @@ def resnet50(num_classes):
   C5 = x
 
   # x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-#   x = layers.Dense(
-#       num_classes, activation='softmax',
-#       kernel_regularizer=regularizers.l2(L2_WEIGHT_DECAY),
-#       bias_regularizer=regularizers.l2(L2_WEIGHT_DECAY),
-#       name='fc1000')(x)
+  # x = layers.Dense(
+  #     num_classes, activation='softmax',
+  #     kernel_regularizer=regularizers.l2(L2_WEIGHT_DECAY),
+  #     bias_regularizer=regularizers.l2(L2_WEIGHT_DECAY),
+  #     name='fc1000')(x)
 
   # Create model.
-  return models.Model(img_input, [C3, C4, C5], name='resnet50')
+  return models.Model(img_input, [x, C3, C4, C5], name='resnet50')
+
+class ResNetBackbone(Backbone):
+    """ Describes backbone information and provides utility functions.
+    """
+
+    def __init__(self, backbone):
+        super(ResNetBackbone, self).__init__(backbone)
+
+    def retinanet(self, *args, **kwargs):
+        """ Returns a retinanet model using the correct backbone.
+        """
+        return resnet_retinanet(*args, backbone=self.backbone, **kwargs)
+
+    def validate(self):
+        """ Checks whether the backbone string is correct.
+        """
+        allowed_backbones = ['resnet50', 'resnet101', 'resnet152']
+        backbone = self.backbone.split('_')[0]
+
+        if backbone not in allowed_backbones:
+            raise ValueError('Backbone (\'{}\') not in allowed backbones ({}).'.format(backbone, allowed_backbones))
+
+    def preprocess_image(self, inputs):
+        """ Takes as input an image and prepares it for being passed through the network.
+        """
+        return preprocess_image(inputs, mode='caffe')
+
+def resnet_retinanet(num_classes, backbone='resnet50', inputs=None, modifier=None):
+    """ Constructs a retinanet model using a resnet backbone.
+
+    Args
+        num_classes: Number of classes to predict.
+        backbone: Which backbone to use (one of ('resnet50', 'resnet101', 'resnet152')).
+        inputs: The inputs to the network (defaults to a Tensor of shape (None, None, 3)).
+        modifier: A function handler which can modify the backbone before using it in retinanet (this can be used to freeze backbone layers for example).
+
+    Returns
+        RetinaNet model with a ResNet backbone.
+    """
+    # choose default input
+    if inputs is None:
+        if tf.keras.backend.image_data_format() == 'channels_first':
+            inputs = tf.keras.layers.Input(shape=(3, None, None))
+        else:
+            inputs = tf.keras.layers.Input(shape=(None, None, 3))
+
+    # create the resnet backbone
+    if backbone == 'resnet50':
+        resnet_outputs = resnet50()(inputs)
+    elif backbone == 'resnet101':
+        raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
+    elif backbone == 'resnet152':
+        raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
+    else:
+        raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
+
+    # invoke modifier if given
+    if modifier:
+        resnet = modifier(resnet)
+
+    # create the full model
+    return retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=resnet_outputs[1:])
+    
