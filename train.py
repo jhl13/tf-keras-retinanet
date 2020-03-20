@@ -4,6 +4,7 @@ import sys
 from data.voc_generator import PascalVocGenerator
 import tensorflow as tf
 import cv2
+from model import resnet
 
 def check_args(args):
     assert args.data_dir is not None, "No input argument: --data_dir."
@@ -27,7 +28,12 @@ def main(args = None):
     print (generator.num_classes())
     print (generator.size())
 
-    
+    # resnet50 = tf.keras.applications.ResNet50V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=10)
+    # for layer in resnet50.layers:
+    #     print (layer.name)
+    model = resnet.resnet50(10)
+    print (model.summary())
+    print (model.output)
 
 if __name__ == "__main__":
     main()
