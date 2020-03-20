@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from utils.image import read_image_bgr
+from data.generator import Generator
 
 import os
 import numpy as np
@@ -65,7 +66,7 @@ def _findNode(parent, name, debug_name=None, parse=None):
     return result
 
 
-class PascalVocGenerator(object):
+class PascalVocGenerator(Generator):
     """ Generate data for a Pascal VOC dataset.
 
     See http://host.robots.ox.ac.uk/pascal/VOC/ for more information.

@@ -2,6 +2,8 @@
 import argparse
 import sys
 from data.voc_generator import PascalVocGenerator
+import tensorflow as tf
+import cv2
 
 def check_args(args):
     assert args.data_dir is not None, "No input argument: --data_dir."
@@ -24,7 +26,8 @@ def main(args = None):
     generator = PascalVocGenerator(args.data_dir, "train")
     print (generator.num_classes())
     print (generator.size())
-    # print (generator.)
+
+    
 
 if __name__ == "__main__":
     main()
