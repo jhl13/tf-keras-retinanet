@@ -4,10 +4,9 @@ import sys
 from data.voc_generator import PascalVocGenerator
 import tensorflow as tf
 import cv2
-from model import resnet
+from model import resnet, fpn, loss, backbone
 from model.retinanet import default_submodels
-from model import fpn
-from model import loss
+from utils.config import make_training_config
 
 def check_args(args):
     assert args.data_dir is not None, "No input argument: --data_dir."
@@ -19,6 +18,7 @@ def parse_args(args):
     parser.add_argument("--user", help="Who runs the training script.", default="luojh")
     parser.add_argument("--data_dir", help="Date path.", default=None)
     parser.add_argument("--set_type", help="Type of data set.", default=None)
+    parser.add_argument("--train_config", help="Path to training config file.", default="./config/train.yaml")
     return check_args(parser.parse_args(args))
 
 def main(args = None):
@@ -27,20 +27,24 @@ def main(args = None):
     args = parse_args(args)
     print ("User:{}, Set_type:{}".format(args.user, args.set_type))
 
+    config = make_training_config(args)
+    print (config)
+
     generator = PascalVocGenerator(args.data_dir, "train")
     
-    model = resnet.resnet_retinanet(num_classes=20)
+    # training_backbone = backbone("resnet50")
+    # model = training_backbone.retinanet(num_classes=20)
 
-    model.compile(
-        loss={
-            'regression'    : loss.smooth_l1(),
-            'classification': loss.focal()
-        },
-        optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
-    )
+    # model.compile(
+    #     loss={
+    #         'regression'    : loss.smooth_l1(),
+    #         'classification': loss.focal()
+    #     },
+    #     optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
+    # )
 
-    print (model.summary())
-    model.fit(x=generator, steps_per_epoch=100, epochs=1)
+    # print (model.summary())
+    # model.fit(x=generator, steps_per_epoch=100, epochs=1)
 
 if __name__ == "__main__":
     main()

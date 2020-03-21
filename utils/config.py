@@ -119,58 +119,58 @@ def make_training_config(args):
 	"""
 	# Parse the configuration file.
 	config = {}
-	if args.config:
-		config = parse_yaml(args.config)
+	if args.train_config:
+		config = parse_yaml(args.train_config)
 	config = set_defaults(config, default_training_config)
 
-	# Additional config; start from this so it can be overwritten by the other command line options.
-	if args.o:
-		config = parse_additional_options(config, args.o)
+	# # Additional config; start from this so it can be overwritten by the other command line options.
+	# if args.o:
+	# 	config = parse_additional_options(config, args.o)
 
-	if args.backbone:
-		config['backbone']['name'] = args.backbone
-	if args.generator:
-		config['generator']['name'] = args.generator
+	# if args.backbone:
+	# 	config['backbone']['name'] = args.backbone
+	# if args.generator:
+	# 	config['generator']['name'] = args.generator
 
-	# Backbone config.
-	if args.freeze_backbone:
-		config['backbone']['details']['freeze'] = args.freeze_backbone
-	if args.backbone_weights:
-		config['backbone']['details']['weights'] = args.backbone_weights
+	# # Backbone config.
+	# if args.freeze_backbone:
+	# 	config['backbone']['details']['freeze'] = args.freeze_backbone
+	# if args.backbone_weights:
+	# 	config['backbone']['details']['weights'] = args.backbone_weights
 
-	# Generator config.
-	if args.random_transform:
-		config['generator']['details']['transform_generator'] = 'random'
-	if args.random_visual_effect:
-		config['generator']['details']['visual_effect_generator'] = 'random'
-	if args.batch_size:
-		config['generator']['details']['batch_size'] = args.batch_size
-	if args.group_method:
-		config['generator']['details']['group_method'] = args.group_method
-	if args.shuffle_groups:
-		config['generator']['details']['shuffle_groups'] = args.shuffle_groups
-	if args.image_min_side:
-		config['generator']['details']['image_min_side'] = args.image_min_side
-	if args.image_max_side:
-		config['generator']['details']['image_max_side'] = args.image_max_side
+	# # Generator config.
+	# if args.random_transform:
+	# 	config['generator']['details']['transform_generator'] = 'random'
+	# if args.random_visual_effect:
+	# 	config['generator']['details']['visual_effect_generator'] = 'random'
+	# if args.batch_size:
+	# 	config['generator']['details']['batch_size'] = args.batch_size
+	# if args.group_method:
+	# 	config['generator']['details']['group_method'] = args.group_method
+	# if args.shuffle_groups:
+	# 	config['generator']['details']['shuffle_groups'] = args.shuffle_groups
+	# if args.image_min_side:
+	# 	config['generator']['details']['image_min_side'] = args.image_min_side
+	# if args.image_max_side:
+	# 	config['generator']['details']['image_max_side'] = args.image_max_side
 
-	# Train config.
-	if args.gpu:
-		config['train']['gpu'] = args.gpu
-	if args.epochs:
-		config['train']['epochs'] = args.epochs
-	if args.steps:
-		config['train']['steps_per_epoch'] = args.steps
-	if args.lr:
-		config['train']['lr'] = args.lr
-	if args.multiprocessing:
-		config['train']['use_multiprocessing'] = args.multiprocessing
-	if args.workers:
-		config['train']['workers'] = args.workers
-	if args.max_queue_size:
-		config['train']['max_queue_size'] = args.max_queue_size
-	if args.weights:
-		config['train']['weights'] = args.weights
+	# # Train config.
+	# if args.gpu:
+	# 	config['train']['gpu'] = args.gpu
+	# if args.epochs:
+	# 	config['train']['epochs'] = args.epochs
+	# if args.steps:
+	# 	config['train']['steps_per_epoch'] = args.steps
+	# if args.lr:
+	# 	config['train']['lr'] = args.lr
+	# if args.multiprocessing:
+	# 	config['train']['use_multiprocessing'] = args.multiprocessing
+	# if args.workers:
+	# 	config['train']['workers'] = args.workers
+	# if args.max_queue_size:
+	# 	config['train']['max_queue_size'] = args.max_queue_size
+	# if args.weights:
+	# 	config['train']['weights'] = args.weights
 
 	return config
 
