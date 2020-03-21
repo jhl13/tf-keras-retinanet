@@ -31,7 +31,11 @@ def main(args = None):
     print (config)
 
     generator = PascalVocGenerator(args.data_dir, "train")
-    
+    input_data, target = generator.__getitem__(12)
+
+    print (input_data[0].shape, target[0][0].shape, target[1][0].shape)
+    print (input_data[1].shape, target[0][1].shape, target[1][1].shape)
+    print (input_data[2].shape, target[0][2].shape, target[1][2].shape)
     # training_backbone = backbone("resnet50")
     # model = training_backbone.retinanet(num_classes=20)
 

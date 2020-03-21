@@ -45,11 +45,11 @@ class Generator(keras.utils.Sequence):
         self,
         transform_generator = None,
         visual_effect_generator=None,
-        batch_size=1,
+        batch_size=5,
         group_method='ratio',  # one of 'none', 'random', 'ratio'
         shuffle_groups=True,
-        image_min_side=800,
-        image_max_side=1333,
+        image_min_side=300,
+        image_max_side=600,
         no_resize=False,
         transform_parameters=None,
         compute_anchor_targets=anchor_targets_bbox,
@@ -331,7 +331,6 @@ class Generator(keras.utils.Sequence):
             annotations_group,
             self.num_classes()
         )
-
         return list(batches)
 
     def compute_input_output(self, group):
