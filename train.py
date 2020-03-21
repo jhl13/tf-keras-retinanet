@@ -28,27 +28,26 @@ def main(args = None):
     print ("User:{}, Set_type:{}".format(args.user, args.set_type))
 
     config = make_training_config(args)
-    print (config)
+    # print (config)
 
     generator = PascalVocGenerator(args.data_dir, "train")
+    print (generator.__len__())
+
     input_data, target = generator.__getitem__(12)
+    print (input_data[0].shape, target[0][0].shape,  target[1][0].shape)
+    training_backbone = backbone("resnet50")
+    model = training_backbone.retinanet(num_classes=20)
 
-    print (input_data[0].shape, target[0][0].shape, target[1][0].shape)
-    print (input_data[1].shape, target[0][1].shape, target[1][1].shape)
-    print (input_data[2].shape, target[0][2].shape, target[1][2].shape)
-    # training_backbone = backbone("resnet50")
-    # model = training_backbone.retinanet(num_classes=20)
+    model.compile(
+        loss={
+            'regression'    : loss.smooth_l1(),
+            'classification': loss.focal()
+        },
+        optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
+    )
 
-    # model.compile(
-    #     loss={
-    #         'regression'    : loss.smooth_l1(),
-    #         'classification': loss.focal()
-    #     },
-    #     optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
-    # )
-
-    # print (model.summary())
-    # model.fit(x=generator, steps_per_epoch=100, epochs=1)
+    print (model.summary())
+    model.fit(x=generator, steps_per_epoch=100, epochs=1)
 
 if __name__ == "__main__":
     main()

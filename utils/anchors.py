@@ -83,8 +83,8 @@ def anchor_targets_bbox(
 
 	batch_size = len(image_group)
 
-	regression_batch  = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=tf.keras.backend.floatx())
-	labels_batch      = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=tf.keras.backend.floatx())
+	regression_batch  = np.zeros((batch_size, anchors.shape[0], 4 + 1), dtype=tf.keras.backend.floatx())  # anchor states
+	labels_batch      = np.zeros((batch_size, anchors.shape[0], num_classes + 1), dtype=tf.keras.backend.floatx())  # anchor states
 
 	# Compute labels and regression targets.
 	for index, (image, annotations) in enumerate(zip(image_group, annotations_group)):
@@ -98,9 +98,10 @@ def anchor_targets_bbox(
 			regression_batch[index, ignore_indices, -1]   = -1
 			regression_batch[index, positive_indices, -1] = 1
 
-			# Compute target class labels.
+			# Compute target class labels. find the reponse labels
 			labels_batch[index, positive_indices, annotations['labels'][argmax_overlaps_inds[positive_indices]].astype(int)] = 1
 
+			# len(anchors) == len(annotations['bboxes'][argmax_overlaps_inds, :])
 			regression_batch[index, :, :-1] = bbox_transform(anchors, annotations['bboxes'][argmax_overlaps_inds, :])
 
 		# Ignore annotations outside of image.
@@ -131,7 +132,7 @@ def compute_gt_annotations(
 		argmax_overlaps_inds: ordered overlaps indices
 	"""
 	overlaps = compute_overlap(anchors.astype(np.float64), annotations.astype(np.float64))
-	argmax_overlaps_inds = np.argmax(overlaps, axis=1)
+	argmax_overlaps_inds = np.argmax(overlaps, axis=1) # for every anchors
 	max_overlaps = overlaps[np.arange(overlaps.shape[0]), argmax_overlaps_inds]
 
 	# Assign "dont care" labels.
@@ -250,14 +251,14 @@ def shift(image_shape, features_shape, stride, anchors):
 		shift_x.ravel(), shift_y.ravel()
 	)).transpose()
 
-	# Add A anchors (1, A, 4) to
-	# cell K shifts (K, 1, 4) to get
+	# Add A anchors (1, A, 4) to         A = 9
+	# cell K shifts (K, 1, 4) to get     K = features_shape[0] * features_shape[1]
 	# shift anchors (K, A, 4)
 	# reshape to (K*A, 4) shifted anchors.
 	A = anchors.shape[0]
 	K = shifts.shape[0]
 	all_anchors = (anchors.reshape((1, A, 4)) + shifts.reshape((1, K, 4)).transpose((1, 0, 2)))
-	all_anchors = all_anchors.reshape((K * A, 4))
+	all_anchors = all_anchors.reshape((K * A, 4)) # K + K + ... + K
 
 	return all_anchors
 
@@ -321,10 +322,10 @@ def bbox_transform(anchors, gt_boxes, mean=None, std=None):
 	targets_dx2 = (gt_boxes[:, 2] - anchors[:, 2]) / anchor_widths
 	targets_dy2 = (gt_boxes[:, 3] - anchors[:, 3]) / anchor_heights
 
-	targets = np.stack((targets_dx1, targets_dy1, targets_dx2, targets_dy2))
+	targets = np.stack((targets_dx1, targets_dy1, targets_dx2, targets_dy2)) # not easy to learn?
 	targets = targets.T
 
-	targets = (targets - mean) / std
+	targets = (targets - mean) / std # why?
 
 	return targets
 

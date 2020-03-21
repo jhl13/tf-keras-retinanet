@@ -58,7 +58,7 @@ def focal(alpha=0.25, gamma=2.0):
         # compute the normalizer: the number of positive anchors
         normalizer = tf.where(tf.keras.backend.equal(anchor_state, 1))
         normalizer = tf.keras.backend.cast(tf.keras.backend.shape(normalizer)[0], tf.keras.backend.floatx())
-        normalizer = tf.keras.backend.maximum(tf.keras.backend.cast_to_floatx(1.0), normalizer)
+        normalizer = tf.keras.backend.maximum(tf.keras.backend.cast_to_floatx(1.0), normalizer) # compare with one
 
         return tf.keras.backend.sum(cls_loss) / normalizer
 

@@ -343,11 +343,11 @@ class Generator(keras.utils.Sequence):
         # check validity of annotations
         image_group, annotations_group = self.filter_annotations(image_group, annotations_group, group)
 
-        # randomly apply visual effect
-        image_group, annotations_group = self.random_visual_effect_group(image_group, annotations_group)
+        # # randomly apply visual effect
+        # image_group, annotations_group = self.random_visual_effect_group(image_group, annotations_group)
 
-        # randomly transform data
-        image_group, annotations_group = self.random_transform_group(image_group, annotations_group)
+        # # randomly transform data
+        # image_group, annotations_group = self.random_transform_group(image_group, annotations_group)
 
         # perform preprocessing steps
         image_group, annotations_group = self.preprocess_group(image_group, annotations_group)
