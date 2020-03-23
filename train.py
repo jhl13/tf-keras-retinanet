@@ -21,6 +21,9 @@ def parse_args(args):
     parser.add_argument("--train_config", help="Path to training config file.", default="./config/train.yaml")
     return check_args(parser.parse_args(args))
 
+def get_callbacks():
+    pass
+
 def main(args = None):
     if args is None:
         args = sys.argv[1:]
@@ -28,16 +31,12 @@ def main(args = None):
     print ("User:{}, Set_type:{}".format(args.user, args.set_type))
 
     config = make_training_config(args)
-    # print (config)
 
     generator = PascalVocGenerator(args.data_dir, "train")
-    print (generator.__len__())
-
-    input_data, target = generator.__getitem__(12)
-    print (input_data[0].shape, target[0][0].shape,  target[1][0].shape)
-    training_backbone = backbone("resnet50")
-    model = training_backbone.retinanet(num_classes=20)
-
+    mirrored_strategy = tf.distribute.MirroredStrategy()
+    with mirrored_strategy.scope():
+        training_backbone = backbone("resnet50")
+        model = training_backbone.retinanet(num_classes=20)
     model.compile(
         loss={
             'regression'    : loss.smooth_l1(),
@@ -47,7 +46,12 @@ def main(args = None):
     )
 
     print (model.summary())
-    model.fit(x=generator, steps_per_epoch=100, epochs=1)
+    model.fit(
+        generator, 
+        steps_per_epoch=10, 
+        epochs=2,
+        workers=1, 
+        use_multiprocessing=1)
 
 if __name__ == "__main__":
     main()

@@ -45,10 +45,10 @@ class Generator(keras.utils.Sequence):
         self,
         transform_generator = None,
         visual_effect_generator=None,
-        batch_size=5,
+        batch_size=1,
         group_method='ratio',  # one of 'none', 'random', 'ratio'
         shuffle_groups=True,
-        image_min_side=300,
+        image_min_side=400,
         image_max_side=600,
         no_resize=False,
         transform_parameters=None,
@@ -373,5 +373,4 @@ class Generator(keras.utils.Sequence):
         """
         group = self.groups[index]
         inputs, targets = self.compute_input_output(group)
-
         return inputs, targets
