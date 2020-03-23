@@ -259,3 +259,4 @@ def evaluate(
 		inference_time = np.sum(all_inferences) / generator.size()
 
 	print_results(generator, average_precisions, inference_time)
+	return average_precision, inference_time
