@@ -19,7 +19,7 @@ from model.loss import focal
 from utils.config import set_defaults
 import tensorflow as tf
 
-
+ 
 def default_classification_model(
 	num_classes,
 	num_anchors,

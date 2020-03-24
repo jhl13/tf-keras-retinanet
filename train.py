@@ -40,7 +40,7 @@ def main(args = None):
     print ("Training batchs per epoch: {}".format(training_generator.__len__()))
     batchs_per_epoch = training_generator.__len__()
 
-    val_generator = PascalVocGenerator("/home/luo13/workspace/datasets/detection/voc2012/VOCdevkit/VOC2012", "val", batch_size=2)
+    val_generator = PascalVocGenerator("/home/luo13/workspace/datasets/detection/voc2012/VOCdevkit/VOC2012", "val")
     print ("Valuating batchs per epoch: {}".format(val_generator.__len__()))
 
     logdir = tf.summary.create_file_writer("./logs")
@@ -55,10 +55,10 @@ def main(args = None):
         optimizer=tf.keras.optimizers.Adam(lr=1e-5, clipnorm=0.001)
     )
 
-    # print (training_model.summary())
+    print (training_model.summary())
     training_model.fit(
         training_generator, 
-        steps_per_epoch=batchs_per_epoch, 
+        steps_per_epoch=1, 
         epochs=10,
         workers=1, 
         callbacks=custom_callbacks,

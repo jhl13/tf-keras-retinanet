@@ -83,6 +83,7 @@ def default_submodels(num_classes, num_anchors):
         ('classification', default_classification_model(num_classes, num_anchors))
     ]
 
+ 
 def retinanet(
 	inputs,
 	num_classes,
@@ -128,7 +129,6 @@ def retinanet(
 	pyramids = fpn.build_pyramid(submodels, features)
 
 	return tf.keras.models.Model(inputs=inputs, outputs=pyramids, name=name)
-
 
 def retinanet_bbox(
 	model                 = None,

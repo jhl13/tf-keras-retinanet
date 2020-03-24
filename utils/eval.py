@@ -53,7 +53,6 @@ def _compute_ap(recall, precision):
 	ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 	return ap
 
-
 def _get_detections(generator, model, score_threshold=0.05, max_detections=100, save_path=None):
 	""" Get the detections from the model using the generator.
 	The result is a list of lists such that the size is:
@@ -80,7 +79,8 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
 
 		# run network
 		start = time.time()
-		boxes, scores, labels = model.predict(np.expand_dims(image, axis=0))[:3]
+		# image = tf.keras.backend.cast_to_floatx(image)
+		boxes, scores, labels = model.predict_on_batch(np.expand_dims(image, axis=0))[:3]
 		inference_time = time.time() - start
 
 		# correct boxes for image scale

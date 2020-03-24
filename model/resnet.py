@@ -187,8 +187,8 @@ def conv_block(input_tensor,
   x = layers.Activation('relu')(x)
   return x
 
-
-def resnet50():
+ 
+def resnet50(img_input):
   # TODO(tfboyd): add training argument, just lik resnet56.
   """Instantiates the ResNet50 architecture.
 
@@ -198,8 +198,8 @@ def resnet50():
   Returns:
       A Keras model instance.
   """
-  input_shape = (None, None, 3)
-  img_input = layers.Input(shape=input_shape)
+#   input_shape = (None, None, 3)
+#   img_input = layers.Input(shape=input_shape)
 
   if backend.image_data_format() == 'channels_first':
     x = layers.Lambda(lambda x: backend.permute_dimensions(x, (0, 3, 1, 2)),
@@ -225,26 +225,26 @@ def resnet50():
   x = layers.MaxPooling2D((3, 3), strides=(2, 2))(x)
 
   x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1))
-  x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
-  x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
+#   x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
+#   x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
 
   x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
-  x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
-  x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
-  x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
+#   x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
+#   x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
+#   x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
   C3 = x
 
   x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
-  x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
-  x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
-  x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
-  x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
-  x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
+#   x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
+#   x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
+#   x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d')
+#   x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
+#   x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
   C4 = x
 
   x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
-  x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
-  x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
+#   x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
+#   x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
   C5 = x
 
 #   x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
@@ -255,7 +255,7 @@ def resnet50():
 #       name='fc1000')(x)
 
   # Create model.
-  return models.Model(img_input, [x, C3, C4, C5], name='resnet50')
+  return x, C3, C4, C5
 
 class ResNetBackbone(Backbone):
     """ Describes backbone information and provides utility functions.
@@ -283,6 +283,7 @@ class ResNetBackbone(Backbone):
         """
         return preprocess_image(inputs, mode='caffe')
 
+ 
 def resnet_retinanet(num_classes, backbone='resnet50', inputs=None, modifier=None):
     """ Constructs a retinanet model using a resnet backbone.
 
@@ -304,7 +305,7 @@ def resnet_retinanet(num_classes, backbone='resnet50', inputs=None, modifier=Non
 
     # create the resnet backbone
     if backbone == 'resnet50':
-        resnet_outputs = resnet50()(inputs)
+        resnet_outputs = resnet50(inputs)
     elif backbone == 'resnet101':
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
     elif backbone == 'resnet152':

@@ -63,3 +63,4 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
 
         if self.verbose == 1:
             print('mAP: {:.4f}'.format(self.mean_ap))
+            

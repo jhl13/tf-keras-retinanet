@@ -18,7 +18,7 @@ from model.loss import smooth_l1
 import tensorflow as tf
 from utils.config import set_defaults
 
-
+ 
 def default_regression_model(num_values, num_anchors, pyramid_feature_size=256, regression_feature_size=256, name='regression_submodel'):
 	""" Creates the default regression submodel.
 	Args
